@@ -6,8 +6,8 @@ import math
 def deg2rad(d):
 	return (d/180.0) * math.pi
 
-EARTH_AXIAL_TILT = deg2rad(-23.4392811)
-EARTH_MERIDIAN_ANGLE = deg2rad(280.147) #TODO: delete
+EARTH_AXIAL_TILT = deg2rad(23.4392811)
+EARTH_LAN = deg2rad(-11.26064)
 
 #---------------------------
 class Rotor:
@@ -58,29 +58,27 @@ def rotRotor(rotor, another):
 
 #---------------------------
 
-def make_rotation(axial_tilt, inclination, lan, meridian_angle, eq_long):
+def make_rotation(axial_tilt, inclination, lan, eq_long):
 	
 	planetRotor = Rotor()
 	
 	planetRotor = rotX(planetRotor, -EARTH_AXIAL_TILT)
-	#planetRotor = rotZ(planetRotor, meridian_angle - EARTH_MERIDIAN_ANGLE) #TODO: delete
 	
 	equatorRotor = Rotor(eq_long, 0, 0, 1)
 	eqAxis = equatorRotor.rotVec(1,0,0)
 	planetRotor = rotRotor(planetRotor, Rotor(axial_tilt, *eqAxis))
 	
 	orbitRotor = Rotor(lan, 0, 0, 1)
-	#orbitRotor = rotZ( orbitRotor, lan )
 	lanAxis = orbitRotor.rotVec(1,0,0)
 	planetRotor = rotRotor(planetRotor, Rotor(inclination, *lanAxis))
 	
 	return planetRotor
 
-def rotate_map(stardata, axial_tilt, inclination, lan, meridian_angle, eq_long):
+def rotate_map(stardata, axial_tilt, inclination, lan, eq_long):
 	"""
 	Main function in this module
 	"""
-	rot = make_rotation(axial_tilt, inclination, lan, meridian_angle, eq_long)
+	rot = make_rotation(axial_tilt, inclination, lan, eq_long)
 	
 	for star in stardata.values():
 		star.x, star.y, star.z = rot.rotVec(star.x, star.y, star.z)

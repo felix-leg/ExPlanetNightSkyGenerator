@@ -15,6 +15,9 @@ CIRCLE_SIZE = 512
 GRAY = (64, 64, 64)
 GRAY_LIGHT = (128, 128, 128)
 WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+
+TEXT_COLOR = GREEN
 
 PI_HALF = math.pi / 2.0
 PI_DOUBLE = math.pi * 2.0
@@ -139,6 +142,9 @@ def create_maps(stardata, max_mag, stars_to_display):
 	x, y = ra_dec_to_polar(0,0)
 	south_draw.line((CIRCLE_SIZE, CIRCLE_SIZE, x, y), fill=GRAY_LIGHT, width=2)
 	
+	wide_text = []
+	north_text = []
+	south_text = []
 	#calculate positions and draw stars
 	for star in stardata.values():
 		ra, dec = calculate_coords(star)
@@ -149,16 +155,26 @@ def create_maps(stardata, max_mag, stars_to_display):
 		x, y = ra_dec_to_pos_rec(ra, dec)
 		wide_draw.ellipse((x-size,y-size, x+size,y+size), fill=color)
 		if draw_name:
-			wide_draw.text((x,y), star.names[0], fill=WHITE)
+			wide_text.append(((x,y), star.names[0]))
 		#polar map
 		if dec < 0:
 			polar_draw = south_draw
+			polar_text = south_text
 		else:
 			polar_draw = north_draw
+			polar_text = north_text
 		x, y = ra_dec_to_polar(ra, dec)
 		polar_draw.ellipse((x-size,y-size, x+size,y+size), fill=color)
 		if draw_name:
-			polar_draw.text((x,y), star.names[0], fill=WHITE)
+			polar_text.append(((x,y), star.names[0]))
+	
+	#draw texts
+	for pos, text in wide_text:
+		wide_draw.text(pos, text, fill=TEXT_COLOR)
+	for pos, text in north_text:
+		north_draw.text(pos, text, fill=TEXT_COLOR)
+	for pos, text in south_text:
+		south_draw.text(pos, text, fill=TEXT_COLOR)
 	
 	return (wide_map, north_map, south_map)
 

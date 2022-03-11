@@ -17,6 +17,9 @@ class Star:
 		self.g = g
 		self.b = b
 	
+	def __copy__(self):
+		return Star("|".join(self.names), self.x, self.y, self.z, self.mag, self.r, self.g, self.b)
+	
 	def __repr__(self):
 		return f"<{self.name}: ({self.x}, {self.y}, {self.z}) mag={self.mag} rgb=({self.r}, {self.g}, {self.b})>"
 

@@ -28,7 +28,8 @@ DEFAULT_STAR_NAMES = [
 	"Alpheratz",
 	"22Zet Dra", #north Jupiter
 	"47Omi Dra", #north Mercury
-	"35Eta Oph" #north Uranus
+	"35Eta Oph", #north Uranus
+	"HIP 88583" #Ecliptic north
 ]
 
 def generate(
@@ -37,7 +38,6 @@ def generate(
 	axial_tilt,
 	inclination,
 	lan,
-	meridian_angle, #TODO: delete
 	eq_long,
 	max_mag,
 	stars_to_display
@@ -53,7 +53,7 @@ def generate(
 		sys.exit(1)
 	
 	#rotate star data
-	rotor.rotate_map(stardata, axial_tilt, inclination, lan, meridian_angle, eq_long)
+	rotor.rotate_map(stardata, axial_tilt, inclination, lan, eq_long)
 	
 	#make star map
 	wide_map, north_map, south_map = mapper.create_maps(stardata, max_mag, stars_to_display)
@@ -87,9 +87,6 @@ if __name__ == "__main__":
 	parser.add_argument('-l', '--longitude', dest='lan', type=angle,
 		default=0.0, metavar='LONGITUDE_OF_ASCENDING_NODE',
 		help="Longitude of ascending node of the planet (default: %(default)s)")
-	parser.add_argument('-e', '--meridianangle', dest='meridian_angle', type=angle,
-		default=rotor.EARTH_MERIDIAN_ANGLE,
-		help="Meridian angle of the planet (default: Earth's meridian angle)")#TODO: delete
 	parser.add_argument('-n', '--equatorlongitude', dest='eq_long', type=angle,
 		default=0.0,
 		help="Ascending node of the planet's equator")
@@ -121,7 +118,6 @@ if __name__ == "__main__":
 		args.axialtilt,
 		args.inclination,
 		args.lan,
-		args.meridian_angle, #TODO: delete
 		args.eq_long,
 		args.mag,
 		DEFAULT_STAR_NAMES
