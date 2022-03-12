@@ -29,11 +29,7 @@ DEFAULT_STAR_NAMES = [
 	"Pollux",
 	"Fomalhaut",
 	"Rastaban",
-	"Alpheratz",
-	"22Zet Dra", #north Jupiter
-	"47Omi Dra", #north Mercury
-	"35Eta Oph", #north Uranus
-	"HIP 88583" #Ecliptic north
+	"Alpheratz"
 ]
 
 class MainWindow(Gtk.Window):
@@ -44,9 +40,36 @@ class MainWindow(Gtk.Window):
 		box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
 		self.add(box)
 		
+		#menu
+		menuBar = Gtk.MenuBar()
+		box.pack_start(menuBar, True, False, 0)
+		menuButton = Gtk.MenuItem(label="Menu")
+		menuBar.append(menuButton)
+		menu = Gtk.Menu()
+		menuButton.set_submenu(menu)
+		
+		chooseStarMenu = Gtk.MenuItem(label="Choose star")
+		menu.append(chooseStarMenu)
+		chooseStarMenu.connect("activate", self.changeStar)
+		
+		seeNorth = Gtk.RadioMenuItem(label="See north map", active=True)
+		menu.append(seeNorth)
+		seeSouth = Gtk.RadioMenuItem(label="See south map")
+		menu.append(seeSouth)
+		seeWide = Gtk.RadioMenuItem(label="See wide map")
+		menu.append(seeWide)
+		seeSouth.join_group(seeNorth)
+		seeWide.join_group(seeNorth)
+		
+		seeNorth.connect("toggled", self.switchMap, "north")
+		seeSouth.connect("toggled", self.switchMap, "south")
+		seeWide.connect("toggled", self.switchMap, "wide")
+		
+		#main image
 		self.skyImage = Gtk.Image()
 		box.pack_start(self.skyImage, True, True, 0)
 		
+		#param fields
 		grid = Gtk.Grid(column_spacing=10, row_spacing=10)
 		box.pack_start(grid, False, False, 0)
 		
@@ -69,6 +92,7 @@ class MainWindow(Gtk.Window):
 		self.inc = 0.0
 		self.lan = 0.0
 		self.eq = 0.0
+		self.map = "north"
 		self.stardata = data_reader.loadData(APPDIR / "starMap.data")
 		self.stardata = mover.move_and_filter_stars(self.stardata, "Sol", 6.0)
 		
@@ -90,16 +114,64 @@ class MainWindow(Gtk.Window):
 		self.eq = rotor.deg2rad(val)
 		self.updateImage()
 	
+	def changeStar(self, *args):
+		dialog = Gtk.MessageDialog(
+			parent=self,
+			destroy_with_parent=True,
+			message_type=Gtk.MessageType.QUESTION,
+			buttons=Gtk.ButtonsType.OK_CANCEL,
+			text="Select star",
+			secondary_text="Choose the central star"
+		)
+		starEntry = Gtk.Entry()
+		dialog.get_content_area().pack_start(starEntry, True, True, 0)
+		starEntry.show()
+		
+		if dialog.run() == Gtk.ResponseType.OK:
+			starName = starEntry.get_text().strip()
+			if len(starName) > 0:
+				try:
+					stardata = data_reader.loadData(APPDIR / "starMap.data")
+					self.stardata = mover.move_and_filter_stars(stardata, starName, 6.0)
+					self.updateImage()
+				except mover.StarNameUnknown:
+					errorDialog = Gtk.MessageDialog(
+						parent=self,
+						modal=True,
+						message_type=Gtk.MessageType.ERROR,
+						buttons=Gtk.ButtonsType.OK,
+						text=f"There is no star named: {starName}"
+					)
+					errorDialog.run()
+					errorDialog.destroy()
+		
+		dialog.destroy()
+	
+	def switchMap(self, radio, value):
+		if radio.get_active():
+			self.map = value
+			self.updateImage()
+	
 	def updateImage(self):
 		#calculate
 		stardata = copy.deepcopy(self.stardata)
 		rotor.rotate_map(stardata, self.axis, self.inc, self.lan, self.eq)
 		wide_map, north_map, south_map = mapper.create_maps(stardata, 6.0, DEFAULT_STAR_NAMES)
-		north_map.thumbnail((800,800))
+		
+		#select map
+		if self.map == "north":
+			north_map.thumbnail((700,700))
+			the_map = north_map
+		elif self.map == "south":
+			south_map.thumbnail((700,700))
+			the_map = south_map
+		elif self.map == "wide":
+			wide_map.thumbnail((1400, 700))
+			the_map = wide_map
 		
 		#convert to pixbuf
-		imData = north_map.tobytes()
-		w, h = north_map.size
+		imData = the_map.tobytes()
+		w, h = the_map.size
 		imData = GLib.Bytes(imData)
 		pix = GdkPixbuf.Pixbuf.new_from_bytes(imData, GdkPixbuf.Colorspace.RGB, 
 			False, 8, w, h, w * 3)
